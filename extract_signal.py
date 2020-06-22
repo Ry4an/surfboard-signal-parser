@@ -16,7 +16,7 @@ def parse(filehandle):
 
     tables = [c.table for c in soup.html.body.find_all('center')]
 
-    for table in tables[0:1]: # FIXME remove range
+    for table in tables:
         (header, id_row, *rows) = table.tbody.find_all('tr', recursive=False)
         title = header.th.get_text()
         ids = [ int(cell.get_text()) for cell in id_row.find_all('td')[1:] ]
@@ -25,7 +25,7 @@ def parse(filehandle):
                 if cell.table:
                     cell.table.extract() # remove stupid refresh note
 
-            (field, *values) = [ cell.string.strip() for cell in row.find_all('td') ]
+            (field, *values) = [ cell.get_text().strip() for cell in row.find_all('td') ]
             for (the_id, value) in zip(ids, values):
                 measurements[title][the_id][field] = value
     return measurements
