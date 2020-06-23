@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 import sys
+import os
+import re
 import json
 import argparse
 
@@ -39,14 +41,35 @@ def main():
     parser.add_argument(
         "files",
         metavar="FILE",
-        type=argparse.FileType('r'),
+        type=argparse.FileType("r"),
         nargs="+",
         help="saved HTTP responses to process",
+    )
+    parser.add_argument(
+        "--timestamp",
+        "-t",
+        choices=["metadata", "filename", "none"],
+        default="metadata",
+        help="source of time in each record",
     )
 
     args = parser.parse_args()
     for fh in args.files:
         values = parse(fh)
+        timestamp = None
+        if args.timestamp == "metadata":
+            timestamp = int(os.path.getmtime(fh.name))
+        elif args.timestamp == "filename":
+            match = re.search("\\d+", fh.name)
+            if not match:
+                raise Exception(
+                    "Unable to extract timestamp number from filename: {}".format(
+                        fh.name
+                    )
+                )
+            timestamp = int(match.group(0))
+        if timestamp is not None:
+            values["timestamp"] = timestamp
         print(json.dumps(values, indent=4, sort_keys=True))
 
 
